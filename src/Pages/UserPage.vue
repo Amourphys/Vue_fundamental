@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>Страница с постами</h1>
-    <my-input v-model="searchQuery" placeholder="Поиск..." />
+    <my-input v-model="searchQuery" placeholder="Поиск..." v-focus />
     <div class="app__btns">
       <my-button @click="fetchPosts">Получить посты</my-button>
       <!--  <input type="text" v-model="modificatorValue" /> -->
@@ -18,22 +18,20 @@
       v-if="!isPostLoading"
     />
     <div v-else>Идет загрузка...</div>
-    <div class="page__wrapper">
-      <div
-        v-for="pageNumber in totalPages"
-        :key="pageNumber"
-        class="page"
-        :class="{
-          'current-page': page === pageNumber,
-        }"
-        :style="{
-          background: yellow,
-        }"
-        @click="changePage(pageNumber)"
-      >
-        {{ pageNumber }}
-      </div>
+    <div v-intersection="loadMorePosts" class="observer"></div>
+    <!-- <div class="page__wrapper">
+    <div
+      v-for="pageNumber in totalPages"
+      :key="pageNumber"
+      class="page"
+      :class="{
+        'current-page': page === pageNumber,
+      }"
+      @click="changePage(pageNumber)"
+    >
+      {{ pageNumber }}
     </div>
+    </div> -->
 
     <div class="like">
       <div>
@@ -56,6 +54,7 @@ import PostList from "@/Components/PostList";
 import MyButton from "@/Components/UI/MyButton.vue";
 import MyDialog from "@/Components/UI/MyDialog.vue";
 import MySelect from "@/Components/UI/MySelect.vue";
+import VIntersection from "@/Directives/VIntersection";
 
 import axios from "axios";
 
@@ -66,6 +65,7 @@ export default {
     MyDialog,
     MyButton,
     MySelect,
+    VIntersection,
   },
   data() {
     return {
@@ -103,32 +103,53 @@ export default {
     showDialog() {
       this.dialogVisible = true;
     },
-    changePage(pageNumber) {
+    /* changePage(pageNumber) {
       this.page = pageNumber;
-    },
+    }, */
     async fetchPosts() {
       try {
         this.isPostLoading = true;
-        setTimeout(async () => {
-          const response = await axios.get(
-            "https://jsonplaceholder.typicode.com/posts",
-            {
-              params: {
-                _page: this.page,
-                _limit: this.limit,
-              },
-            }
-          );
-          this.totalPages = Math.ceil(
-            response.headers["x-total-count"] / this.limit
-          );
-          this.posts = response.data;
-          this.isPostLoading = false;
-          console.log(response);
-        }, 1000);
+        const response = await axios.get(
+          "https://jsonplaceholder.typicode.com/posts",
+          {
+            params: {
+              _page: this.page,
+              _limit: this.limit,
+            },
+          }
+        );
+        this.totalPages = Math.ceil(
+          response.headers["x-total-count"] / this.limit
+        );
+        this.posts = response.data;
+        this.isPostLoading = false;
+        console.log(response);
       } catch (e) {
         alert("Error");
-      } finally {
+      }
+    },
+
+    async loadMorePosts() {
+      try {
+        /* this.isPostLoading = true; */
+        this.page += 1;
+        const response = await axios.get(
+          "https://jsonplaceholder.typicode.com/posts",
+          {
+            params: {
+              _page: this.page,
+              _limit: this.limit,
+            },
+          }
+        );
+        this.totalPages = Math.ceil(
+          response.headers["x-total-count"] / this.limit
+        );
+        this.posts = [...this.posts, ...response.data];
+        /* this.isPostLoading = false; */
+        console.log(response);
+      } catch (e) {
+        alert("Error");
       }
     },
   },
@@ -155,9 +176,9 @@ export default {
         return post1[newValue]?.localeCompare(post2[newValue]);
       });
     }, */
-    page() {
+    /* page() {
       this.fetchPosts();
-    },
+    }, */
   },
 };
 </script>
@@ -181,6 +202,11 @@ export default {
 
 .current-page {
   border: 2px solid teal;
+}
+
+.observer {
+  height: 30px;
+  background: teal;
 }
 
 .like {

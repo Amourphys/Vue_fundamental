@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>Welcome to the VUE-3 course</h1>
+    <h1>Page with id: {{ $route.params.id }}</h1>
   </div>
 </template>
 
